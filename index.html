@@ -334,7 +334,7 @@
   const toast = document.getElementById('toast');
 
   toast.textContent = texto;
-  toast.style.display = 'block';
+  toast.style.opacity = '1';
 
   if (tipo === 'erro') {
     toast.style.backgroundColor = '#dc3545';
@@ -345,13 +345,13 @@
   }
 
   setTimeout(() => {
-    toast.style.display = 'none';
+    toast.style.opacity = '0';
   }, 3000);
 }
 
 function limparMensagem() {
   const toast = document.getElementById('toast');
-  toast.style.display = 'none';
+  toast.style.opacity = '0';
   toast.textContent = '';
 }
 
