@@ -22,7 +22,7 @@
       margin: 30px auto;
       background: #fff;
       border-radius: 14px;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
       padding: 24px;
     }
 
@@ -192,7 +192,7 @@
 
       <div class="campo">
         <label for="codigoFeirante">Código do Feirante</label>
-        <input type="text" id="codigoFeirante" placeholder="Ex.: FEIRANTE001">
+        <input type="text" id="codigoFeirante" placeholder="Ex.: 1">
       </div>
 
       <div class="campo">
@@ -237,7 +237,7 @@
 
           <div class="campo" style="margin-top: 16px;">
             <label for="valorCompra">Valor da Compra</label>
-            <input type="text" id="valorCompra" placeholder="Ex.: 20,00">
+            <input type="text" id="valorCompra" placeholder="Ex.: 9,80">
           </div>
 
           <button id="btnCompra" class="btn-verde" onclick="registrarCompra()">Confirmar Compra</button>
@@ -312,10 +312,11 @@
     }
 
     async function fazerLogin() {
+      const btn = document.getElementById('btnLogin');
+
       try {
         limparMensagem();
 
-        const btn = document.getElementById('btnLogin');
         btn.disabled = true;
         btn.textContent = 'Entrando...';
 
@@ -376,10 +377,11 @@
     }
 
     async function consultarServidor() {
+      const btn = document.getElementById('btnConsultar');
+
       try {
         limparMensagem();
 
-        const btn = document.getElementById('btnConsultar');
         btn.disabled = true;
         btn.textContent = 'Consultando...';
 
@@ -416,7 +418,6 @@
       } catch (error) {
         mostrarMensagem('Erro ao consultar servidor.', 'erro');
       } finally {
-        const btn = document.getElementById('btnConsultar');
         btn.disabled = false;
         btn.textContent = 'Consultar Saldo';
       }
@@ -426,6 +427,8 @@
       if (compraEmProcessamento) {
         return;
       }
+
+      const btn = document.getElementById('btnCompra');
 
       try {
         limparMensagem();
@@ -452,8 +455,6 @@
         const requestId = gerarRequestId();
 
         compraEmProcessamento = true;
-
-        const btn = document.getElementById('btnCompra');
         btn.disabled = true;
         btn.textContent = 'Processando compra...';
 
@@ -488,7 +489,6 @@
         mostrarMensagem('Erro ao registrar a compra.', 'erro');
       } finally {
         compraEmProcessamento = false;
-        const btn = document.getElementById('btnCompra');
         btn.disabled = false;
         btn.textContent = 'Confirmar Compra';
       }
