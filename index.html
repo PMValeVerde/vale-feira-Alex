@@ -354,6 +354,35 @@
       return 'REQ-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10).toUpperCase();
     }
 
+    function confirmarLeituraQr() {
+  try {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+
+    gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.18);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + 0.18);
+  } catch (error) {
+  }
+
+  try {
+    if (navigator.vibrate) {
+      navigator.vibrate(150);
+    }
+  } catch (error) {
+  }
+}
+    
     async function chamarAPI(params) {
       const query = new URLSearchParams(params).toString();
       const url = `${API_URL}?${query}`;
@@ -652,13 +681,12 @@
           { facingMode: "environment" },
           config,
           async (decodedText) => {
-            document.getElementById('codigoFeirante').value = decodedText.trim();
-            await pararLeitorQrFeirante();
-            mostrarMensagem('QR do feirante lido com sucesso.', 'sucesso');
-            document.getElementById('senhaFeirante').focus();
-          },
-          () => {}
-        );
+  confirmarLeituraQr();
+  document.getElementById('codigoFeirante').value = decodedText.trim();
+  await pararLeitorQrFeirante();
+  mostrarMensagem('QR do feirante lido com sucesso.', 'sucesso');
+  document.getElementById('senhaFeirante').focus();
+},
 
         leitorLoginAtivo = true;
         mostrarMensagem('Câmera iniciada. Aponte para o QR do feirante.', 'info');
@@ -708,13 +736,12 @@
           { facingMode: "environment" },
           config,
           async (decodedText) => {
-            document.getElementById('codigoServidor').value = decodedText.trim();
-            await pararLeitorQrServidor();
-            mostrarMensagem('QR do servidor lido com sucesso.', 'sucesso');
-            await consultarServidor();
-          },
-          () => {}
-        );
+  confirmarLeituraQr();
+  document.getElementById('codigoServidor').value = decodedText.trim();
+  await pararLeitorQrServidor();
+  mostrarMensagem('QR do servidor lido com sucesso.', 'sucesso');
+  await consultarServidor();
+},
 
         leitorServidorAtivo = true;
         mostrarMensagem('Câmera iniciada. Aponte para o QR do servidor.', 'info');
