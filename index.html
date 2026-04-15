@@ -179,7 +179,8 @@
       color: #198754;
     }
 
-    #reader {
+    #readerLogin,
+    #readerServidor {
       width: 100%;
       max-width: 420px;
       margin: 12px auto 0 auto;
@@ -218,6 +219,17 @@
         <input type="text" id="codigoFeirante" placeholder="Ex.: 1">
       </div>
 
+      <div class="acoes-leitor">
+        <button type="button" class="btn-laranja" onclick="iniciarLeitorQrFeirante()">Ler QR do Feirante</button>
+        <button type="button" class="btn-secundario" onclick="pararLeitorQrFeirante()">Fechar câmera</button>
+      </div>
+
+      <div id="areaLeitorLogin" class="card hidden">
+        <div class="resumo"><strong>Leitor de QR do Feirante</strong></div>
+        <div class="resumo">Aponte a câmera para o QR Code do feirante.</div>
+        <div id="readerLogin"></div>
+      </div>
+
       <div class="campo">
         <label for="senhaFeirante">Senha</label>
         <input type="password" id="senhaFeirante" placeholder="Digite a senha">
@@ -251,14 +263,14 @@
         </div>
 
         <div class="acoes-leitor">
-          <button type="button" class="btn-laranja" onclick="iniciarLeitorQr()">Ler QR com câmera</button>
-          <button type="button" class="btn-secundario" onclick="pararLeitorQr()">Fechar câmera</button>
+          <button type="button" class="btn-laranja" onclick="iniciarLeitorQrServidor()">Ler QR do Servidor</button>
+          <button type="button" class="btn-secundario" onclick="pararLeitorQrServidor()">Fechar câmera</button>
         </div>
 
-        <div id="areaLeitor" class="card hidden">
-          <div class="resumo"><strong>Leitor de QR Code</strong></div>
+        <div id="areaLeitorServidor" class="card hidden">
+          <div class="resumo"><strong>Leitor de QR do Servidor</strong></div>
           <div class="resumo">Aponte a câmera para o QR Code do servidor.</div>
-          <div id="reader"></div>
+          <div id="readerServidor"></div>
         </div>
 
         <button id="btnConsultar" onclick="consultarServidor()">Consultar Saldo</button>
@@ -292,8 +304,12 @@
     let feiranteLogado = null;
     let servidorAtual = null;
     let compraEmProcessamento = false;
-    let html5QrCode = null;
-    let leitorAtivo = false;
+
+    let html5QrCodeLogin = null;
+    let leitorLoginAtivo = false;
+
+    let html5QrCodeServidor = null;
+    let leitorServidorAtivo = false;
 
     function mostrarMensagem(texto, tipo = 'info') {
       const div = document.getElementById('mensagem');
@@ -341,7 +357,6 @@
     async function chamarAPI(params) {
       const query = new URLSearchParams(params).toString();
       const url = `${API_URL}?${query}`;
-
       const resposta = await fetch(url);
       const dados = await resposta.json();
       return dados;
@@ -394,7 +409,8 @@
     }
 
     async function logout() {
-      await pararLeitorQr();
+      await pararLeitorQrFeirante();
+      await pararLeitorQrServidor();
 
       feiranteLogado = null;
       servidorAtual = null;
@@ -610,20 +626,20 @@
       }
     }
 
-    async function iniciarLeitorQr() {
+    async function iniciarLeitorQrFeirante() {
       try {
         limparMensagem();
 
-        if (leitorAtivo) {
-          mostrarMensagem('A câmera já está ativa.', 'info');
+        if (leitorLoginAtivo) {
+          mostrarMensagem('A câmera do login já está ativa.', 'info');
           return;
         }
 
-        const areaLeitor = document.getElementById('areaLeitor');
-        areaLeitor.classList.remove('hidden');
+        const area = document.getElementById('areaLeitorLogin');
+        area.classList.remove('hidden');
 
-        if (!html5QrCode) {
-          html5QrCode = new Html5Qrcode("reader");
+        if (!html5QrCodeLogin) {
+          html5QrCodeLogin = new Html5Qrcode("readerLogin");
         }
 
         const config = {
@@ -632,38 +648,93 @@
           aspectRatio: 1.0
         };
 
-        await html5QrCode.start(
+        await html5QrCodeLogin.start(
+          { facingMode: "environment" },
+          config,
+          async (decodedText) => {
+            document.getElementById('codigoFeirante').value = decodedText.trim();
+            await pararLeitorQrFeirante();
+            mostrarMensagem('QR do feirante lido com sucesso.', 'sucesso');
+            document.getElementById('senhaFeirante').focus();
+          },
+          () => {}
+        );
+
+        leitorLoginAtivo = true;
+        mostrarMensagem('Câmera iniciada. Aponte para o QR do feirante.', 'info');
+      } catch (error) {
+        document.getElementById('areaLeitorLogin').classList.add('hidden');
+        mostrarMensagem('Não foi possível acessar a câmera do login. Verifique a permissão do navegador.', 'erro');
+      }
+    }
+
+    async function pararLeitorQrFeirante() {
+      try {
+        if (html5QrCodeLogin && leitorLoginAtivo) {
+          await html5QrCodeLogin.stop();
+          await html5QrCodeLogin.clear();
+        }
+      } catch (error) {
+      } finally {
+        leitorLoginAtivo = false;
+        document.getElementById('areaLeitorLogin').classList.add('hidden');
+        document.getElementById('readerLogin').innerHTML = '';
+      }
+    }
+
+    async function iniciarLeitorQrServidor() {
+      try {
+        limparMensagem();
+
+        if (leitorServidorAtivo) {
+          mostrarMensagem('A câmera do servidor já está ativa.', 'info');
+          return;
+        }
+
+        const area = document.getElementById('areaLeitorServidor');
+        area.classList.remove('hidden');
+
+        if (!html5QrCodeServidor) {
+          html5QrCodeServidor = new Html5Qrcode("readerServidor");
+        }
+
+        const config = {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0
+        };
+
+        await html5QrCodeServidor.start(
           { facingMode: "environment" },
           config,
           async (decodedText) => {
             document.getElementById('codigoServidor').value = decodedText.trim();
-            await pararLeitorQr();
-            mostrarMensagem('QR Code lido com sucesso.', 'sucesso');
+            await pararLeitorQrServidor();
+            mostrarMensagem('QR do servidor lido com sucesso.', 'sucesso');
             await consultarServidor();
           },
-          () => {
-          }
+          () => {}
         );
 
-        leitorAtivo = true;
-        mostrarMensagem('Câmera iniciada. Aponte para o QR Code.', 'info');
+        leitorServidorAtivo = true;
+        mostrarMensagem('Câmera iniciada. Aponte para o QR do servidor.', 'info');
       } catch (error) {
-        document.getElementById('areaLeitor').classList.add('hidden');
-        mostrarMensagem('Não foi possível acessar a câmera. Verifique a permissão do navegador.', 'erro');
+        document.getElementById('areaLeitorServidor').classList.add('hidden');
+        mostrarMensagem('Não foi possível acessar a câmera do servidor. Verifique a permissão do navegador.', 'erro');
       }
     }
 
-    async function pararLeitorQr() {
+    async function pararLeitorQrServidor() {
       try {
-        if (html5QrCode && leitorAtivo) {
-          await html5QrCode.stop();
-          await html5QrCode.clear();
+        if (html5QrCodeServidor && leitorServidorAtivo) {
+          await html5QrCodeServidor.stop();
+          await html5QrCodeServidor.clear();
         }
       } catch (error) {
       } finally {
-        leitorAtivo = false;
-        document.getElementById('areaLeitor').classList.add('hidden');
-        document.getElementById('reader').innerHTML = '';
+        leitorServidorAtivo = false;
+        document.getElementById('areaLeitorServidor').classList.add('hidden');
+        document.getElementById('readerServidor').innerHTML = '';
       }
     }
 
@@ -693,6 +764,12 @@
       document.getElementById('codigoServidor').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
           consultarServidor();
+        }
+      });
+
+      document.getElementById('codigoFeirante').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          document.getElementById('senhaFeirante').focus();
         }
       });
 
