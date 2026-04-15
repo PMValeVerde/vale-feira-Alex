@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vale-Feira Digital</title>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -85,6 +86,14 @@
 
     .btn-verde:hover {
       background: #146c43;
+    }
+
+    .btn-laranja {
+      background: #fd7e14;
+    }
+
+    .btn-laranja:hover {
+      background: #d96a0f;
     }
 
     .card {
@@ -170,8 +179,22 @@
       color: #198754;
     }
 
+    #reader {
+      width: 100%;
+      max-width: 420px;
+      margin: 12px auto 0 auto;
+    }
+
+    .acoes-leitor {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
     @media (max-width: 600px) {
-      .menu {
+      .menu,
+      .acoes-leitor {
         grid-template-columns: 1fr;
       }
 
@@ -227,6 +250,17 @@
           <input type="text" id="codigoServidor" placeholder="Escaneie ou digite o código do servidor">
         </div>
 
+        <div class="acoes-leitor">
+          <button type="button" class="btn-laranja" onclick="iniciarLeitorQr()">Ler QR com câmera</button>
+          <button type="button" class="btn-secundario" onclick="pararLeitorQr()">Fechar câmera</button>
+        </div>
+
+        <div id="areaLeitor" class="card hidden">
+          <div class="resumo"><strong>Leitor de QR Code</strong></div>
+          <div class="resumo">Aponte a câmera para o QR Code do servidor.</div>
+          <div id="reader"></div>
+        </div>
+
         <button id="btnConsultar" onclick="consultarServidor()">Consultar Saldo</button>
 
         <div id="cardServidor" class="card hidden">
@@ -258,6 +292,8 @@
     let feiranteLogado = null;
     let servidorAtual = null;
     let compraEmProcessamento = false;
+    let html5QrCode = null;
+    let leitorAtivo = false;
 
     function mostrarMensagem(texto, tipo = 'info') {
       const div = document.getElementById('mensagem');
@@ -357,7 +393,9 @@
       }
     }
 
-    function logout() {
+    async function logout() {
+      await pararLeitorQr();
+
       feiranteLogado = null;
       servidorAtual = null;
       compraEmProcessamento = false;
@@ -569,6 +607,63 @@
         mostrarMensagem('Extrato carregado com sucesso.', 'sucesso');
       } catch (error) {
         mostrarMensagem('Erro ao carregar extrato.', 'erro');
+      }
+    }
+
+    async function iniciarLeitorQr() {
+      try {
+        limparMensagem();
+
+        if (leitorAtivo) {
+          mostrarMensagem('A câmera já está ativa.', 'info');
+          return;
+        }
+
+        const areaLeitor = document.getElementById('areaLeitor');
+        areaLeitor.classList.remove('hidden');
+
+        if (!html5QrCode) {
+          html5QrCode = new Html5Qrcode("reader");
+        }
+
+        const config = {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0
+        };
+
+        await html5QrCode.start(
+          { facingMode: "environment" },
+          config,
+          async (decodedText) => {
+            document.getElementById('codigoServidor').value = decodedText.trim();
+            await pararLeitorQr();
+            mostrarMensagem('QR Code lido com sucesso.', 'sucesso');
+            await consultarServidor();
+          },
+          () => {
+          }
+        );
+
+        leitorAtivo = true;
+        mostrarMensagem('Câmera iniciada. Aponte para o QR Code.', 'info');
+      } catch (error) {
+        document.getElementById('areaLeitor').classList.add('hidden');
+        mostrarMensagem('Não foi possível acessar a câmera. Verifique a permissão do navegador.', 'erro');
+      }
+    }
+
+    async function pararLeitorQr() {
+      try {
+        if (html5QrCode && leitorAtivo) {
+          await html5QrCode.stop();
+          await html5QrCode.clear();
+        }
+      } catch (error) {
+      } finally {
+        leitorAtivo = false;
+        document.getElementById('areaLeitor').classList.add('hidden');
+        document.getElementById('reader').innerHTML = '';
       }
     }
 
