@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vale-Feira Digital</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f4f6f8;
+      color: #222;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 30px auto;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+      padding: 24px;
+    }
+
+    h1, h2, h3 {
+      margin-top: 0;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .campo {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    input, button, select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    button {
+      background: #1f6feb;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 6px;
+    }
+
+    button:hover {
+      background: #1557b0;
+    }
+
+    .btn-secundario {
+      background: #6c757d;
+    }
+
+    .btn-secundario:hover {
+      background: #545b62;
+    }
+
+    .btn-verde {
+      background: #198754;
+    }
+
+    .btn-verde:hover {
+      background: #146c43;
+    }
+
+    .card {
+      background: #f8f9fa;
+      border: 1px solid #e3e6ea;
+      border-radius: 10px;
+      padding: 14px;
+      margin-top: 14px;
+    }
+
+    .linha {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .mensagem {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-weight: bold;
+    }
+
+    .sucesso {
+      background: #d1e7dd;
+      color: #0f5132;
+      border: 1px solid #badbcc;
+    }
+
+    .erro {
+      background: #f8d7da;
+      color: #842029;
+      border: 1px solid #f5c2c7;
+    }
+
+    .info {
+      background: #cff4fc;
+      color: #055160;
+      border: 1px solid #b6effb;
+    }
+
+    .topo {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .topo .usuario {
+      font-size: 14px;
+      color: #555;
+    }
+
+    .tabela {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+
+    .tabela th,
+    .tabela td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    .tabela th {
+      background: #f1f3f5;
+    }
+
+    .menu {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .resumo {
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .destaque {
+      font-size: 22px;
+      font-weight: bold;
+      color: #198754;
+    }
+
+    @media (max-width: 600px) {
+      .linha,
+      .menu {
+        grid-template-columns: 1fr;
+      }
+
+      .container {
+        margin: 10px;
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="mensagem"></div>
+
+    <section id="telaLogin">
+      <h1>Vale-Feira Digital</h1>
+      <p>Login do feirante</p>
+
+      <div class="campo">
+        <label for="codigoFeirante">Código do Feirante</label>
+        <input type="text" id="codigoFeirante" placeholder="Ex.: FEIRANTE001">
+      </div>
+
+      <div class="campo">
+        <label for="senhaFeirante">Senha</label>
+        <input type="password" id="senhaFeirante" placeholder="Digite a senha">
+      </div>
+
+      <button onclick="fazerLogin()">Entrar</button>
+    </section>
+
+    <section id="telaSistema" class="hidden">
+      <div class="topo">
+        <div>
+          <h2>Painel do Feirante</h2>
+          <div class="usuario" id="usuarioLogado"></div>
+        </div>
+        <div>
+          <button class="btn-secundario" onclick="logout()">Sair</button>
+        </div>
+      </div>
+
+      <div class="menu">
+        <button onclick="mostrarTela('telaConsulta')">Registrar Compra</button>
+        <button class="btn-secundario" onclick="carregarExtrato()">Ver Extrato</button>
+      </div>
+
+      <section id="telaConsulta">
+        <h3>Consulta e Pagamento</h3>
+
+        <div class="campo">
+          <label for="codigoServidor">QR Code / ID do Servidor</label>
+          <input type="text" id="codigoServidor" placeholder="Escaneie ou digite o código do servidor">
+        </div>
+
+        <button onclick="consultarServidor()">Consultar Saldo</button>
+
+        <div id="cardServidor" class="card hidden">
+          <div class="resumo"><strong>ID:</strong> <span id="srvId"></span></div>
+          <div class="resumo"><strong>Nome:</strong> <span id="srvNome"></span></div>
+          <div class="resumo"><strong>Secretaria:</strong> <span id="srvSecretaria"></span></div>
+          <div class="resumo"><strong>Saldo Atual:</strong> R$ <span id="srvSaldo"></span></div>
+
+          <div class="campo" style="margin-top: 16px;">
+            <label for="valorCompra">Valor da Compra</label>
+            <input type="number" id="valorCompra" step="0.01" min="0" placeholder="Ex.: 20.00">
+          </div>
+
+          <button class="btn-verde" onclick="registrarCompra()">Confirmar Compra</button>
+        </div>
+      </section>
+
+      <section id="telaExtrato" class="hidden">
+        <h3>Extrato do Feirante</h3>
+        <div id="resumoExtrato" class="card hidden"></div>
+        <div id="listaExtrato"></div>
+      </section>
+    </section>
+  </div>
+
+  <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwEkneM56C6Sz9hG9AUA-K5toUxQjLqN04RN7Di9DGD67zexmuGO9LfdrM4r5kAJ9NfwQ/exec';
+
+    let feiranteLogado = null;
+    let servidorAtual = null;
+
+    function mostrarMensagem(texto, tipo = 'info') {
+      const div = document.getElementById('mensagem');
+      div.className = `mensagem ${tipo}`;
+      div.textContent = texto;
+      div.classList.remove('hidden');
+    }
+
+    function limparMensagem() {
+      const div = document.getElementById('mensagem');
+      div.className = '';
+      div.textContent = '';
+    }
+
+    function mostrarTela(nomeTela) {
+      document.getElementById('telaConsulta').classList.add('hidden');
+      document.getElementById('telaExtrato').classList.add('hidden');
+      document.getElementById(nomeTela).classList.remove('hidden');
+      limparMensagem();
+    }
+
+    function formatarMoeda(valor) {
+      return Number(valor || 0).toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function formatarData(data) {
+      const d = new Date(data);
+      if (isNaN(d.getTime())) {
+        return data;
+      }
+      return d.toLocaleString('pt-BR');
+    }
+
+    async function chamarAPI(params) {
+      const query = new URLSearchParams(params).toString();
+      const url = `${API_URL}?${query}`;
+
+      const resposta = await fetch(url);
+      const dados = await resposta.json();
+      return dados;
+    }
+
+    async function fazerLogin() {
+      try {
+        limparMensagem();
+
+        const codigoFeirante = document.getElementById('codigoFeirante').value.trim();
+        const senha = document.getElementById('senhaFeirante').value.trim();
+
+        if (!codigoFeirante || !senha) {
+          mostrarMensagem('Informe o código do feirante e a senha.', 'erro');
+          return;
+        }
+
+        const dados = await chamarAPI({
+          action: 'loginFeirante',
+          codigoFeirante,
+          senha
+        });
+
+        if (!dados.ok) {
+          mostrarMensagem(dados.message || 'Erro no login.', 'erro');
+          return;
+        }
+
+        feiranteLogado = dados.feirante;
+        localStorage.setItem('feiranteLogado', JSON.stringify(feiranteLogado));
+
+        document.getElementById('telaLogin').classList.add('hidden');
+        document.getElementById('telaSistema').classList.remove('hidden');
+        document.getElementById('usuarioLogado').textContent =
+          `Feirante: ${feiranteLogado.nome} (${feiranteLogado.codigoQR})`;
+
+        mostrarTela('telaConsulta');
+        mostrarMensagem('Login realizado com sucesso.', 'sucesso');
+      } catch (error) {
+        mostrarMensagem('Erro ao conectar com o servidor.', 'erro');
+      }
+    }
+
+    function logout() {
+      feiranteLogado = null;
+      servidorAtual = null;
+      localStorage.removeItem('feiranteLogado');
+
+      document.getElementById('telaLogin').classList.remove('hidden');
+      document.getElementById('telaSistema').classList.add('hidden');
+      document.getElementById('cardServidor').classList.add('hidden');
+
+      document.getElementById('codigoFeirante').value = '';
+      document.getElementById('senhaFeirante').value = '';
+      document.getElementById('codigoServidor').value = '';
+      document.getElementById('valorCompra').value = '';
+
+      limparMensagem();
+    }
+
+    async function consultarServidor() {
+      try {
+        limparMensagem();
+
+        const codigoServidor = document.getElementById('codigoServidor').value.trim();
+
+        if (!codigoServidor) {
+          mostrarMensagem('Informe ou escaneie o código do servidor.', 'erro');
+          return;
+        }
+
+        const dados = await chamarAPI({
+          action: 'consultarServidor',
+          codigoServidor
+        });
+
+        if (!dados.ok) {
+          document.getElementById('cardServidor').classList.add('hidden');
+          mostrarMensagem(dados.message || 'Servidor não encontrado.', 'erro');
+          return;
+        }
+
+        servidorAtual = dados.servidor;
+
+        document.getElementById('srvId').textContent = servidorAtual.id;
+        document.getElementById('srvNome').textContent = servidorAtual.nome;
+        document.getElementById('srvSecretaria').textContent = servidorAtual.secretaria;
+        document.getElementById('srvSaldo').textContent = formatarMoeda(servidorAtual.saldo);
+
+        document.getElementById('cardServidor').classList.remove('hidden');
+
+        mostrarMensagem('Servidor localizado com sucesso.', 'sucesso');
+      } catch (error) {
+        mostrarMensagem('Erro ao consultar servidor.', 'erro');
+      }
+    }
+
+    async function registrarCompra() {
+      try {
+        limparMensagem();
+
+        if (!feiranteLogado) {
+          mostrarMensagem('Feirante não autenticado.', 'erro');
+          return;
+        }
+
+        if (!servidorAtual) {
+          mostrarMensagem('Consulte primeiro um servidor.', 'erro');
+          return;
+        }
+
+        const valorCompra = document.getElementById('valorCompra').value.trim();
+
+        if (!valorCompra || Number(valorCompra) <= 0) {
+          mostrarMensagem('Informe um valor de compra válido.', 'erro');
+          return;
+        }
+
+        const dados = await chamarAPI({
+          action: 'registrarCompra',
+          codigoServidor: servidorAtual.id,
+          valor: valorCompra,
+          codigoFeirante: feiranteLogado.codigoQR
+        });
+
+        if (!dados.ok) {
+          mostrarMensagem(dados.message || 'Erro ao registrar compra.', 'erro');
+          return;
+        }
+
+        const compra = dados.compra;
+
+        document.getElementById('srvSaldo').textContent = formatarMoeda(compra.saldoAtual);
+        document.getElementById('valorCompra').value = '';
+        servidorAtual.saldo = compra.saldoAtual;
+
+        mostrarMensagem(
+          `Compra registrada com sucesso. Transação: ${compra.idTransacao}. Saldo atual: R$ ${formatarMoeda(compra.saldoAtual)}.`,
+          'sucesso'
+        );
+      } catch (error) {
+        mostrarMensagem('Erro ao registrar a compra.', 'erro');
+      }
+    }
+
+    async function carregarExtrato() {
+      try {
+        limparMensagem();
+
+        if (!feiranteLogado) {
+          mostrarMensagem('Feirante não autenticado.', 'erro');
+          return;
+        }
+
+        mostrarTela('telaExtrato');
+
+        const dados = await chamarAPI({
+          action: 'extratoFeirante',
+          codigoFeirante: feiranteLogado.codigoQR
+        });
+
+        if (!dados.ok) {
+          mostrarMensagem(dados.message || 'Erro ao carregar extrato.', 'erro');
+          return;
+        }
+
+        const resumo = document.getElementById('resumoExtrato');
+        const lista = document.getElementById('listaExtrato');
+
+        resumo.classList.remove('hidden');
+        resumo.innerHTML = `
+          <div class="resumo"><strong>Feirante:</strong> ${dados.feirante.nome}</div>
+          <div class="resumo"><strong>Código:</strong> ${dados.feirante.codigoQR}</div>
+          <div class="resumo"><strong>Quantidade de vendas:</strong> ${dados.quantidadeMovimentos}</div>
+          <div class="resumo"><strong>Total vendido:</strong></div>
+          <div class="destaque">R$ ${formatarMoeda(dados.totalVendido)}</div>
+        `;
+
+        if (!dados.movimentos || dados.movimentos.length === 0) {
+          lista.innerHTML = `<div class="card">Nenhuma movimentação encontrada.</div>`;
+          return;
+        }
+
+        let html = `
+          <table class="tabela">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Servidor</th>
+                <th>Secretaria</th>
+                <th>Valor</th>
+                <th>Saldo após compra</th>
+                <th>Transação</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        dados.movimentos.forEach(item => {
+          html += `
+            <tr>
+              <td>${formatarData(item.data)}</td>
+              <td>${item.nomeServidor} (${item.idServidor})</td>
+              <td>${item.secretaria}</td>
+              <td>R$ ${formatarMoeda(item.valor)}</td>
+              <td>R$ ${formatarMoeda(item.saldoAposCompra)}</td>
+              <td>${item.idTransacao}</td>
+            </tr>
+          `;
+        });
+
+        html += `
+            </tbody>
+          </table>
+        `;
+
+        lista.innerHTML = html;
+        mostrarMensagem('Extrato carregado com sucesso.', 'sucesso');
+      } catch (error) {
+        mostrarMensagem('Erro ao carregar extrato.', 'erro');
+      }
+    }
+
+    function restaurarLogin() {
+      const salvo = localStorage.getItem('feiranteLogado');
+      if (!salvo) {
+        return;
+      }
+
+      try {
+        feiranteLogado = JSON.parse(salvo);
+
+        document.getElementById('telaLogin').classList.add('hidden');
+        document.getElementById('telaSistema').classList.remove('hidden');
+        document.getElementById('usuarioLogado').textContent =
+          `Feirante: ${feiranteLogado.nome} (${feiranteLogado.codigoQR})`;
+
+        mostrarTela('telaConsulta');
+      } catch (error) {
+        localStorage.removeItem('feiranteLogado');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      restaurarLogin();
+
+      document.getElementById('codigoServidor').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          consultarServidor();
+        }
+      });
+
+      document.getElementById('senhaFeirante').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          fazerLogin();
+        }
+      });
+
+      document.getElementById('valorCompra').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          registrarCompra();
+        }
+      });
+    });
+  </script>
+</body>
+</html>
