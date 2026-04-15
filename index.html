@@ -44,12 +44,18 @@
       margin-bottom: 6px;
     }
 
-    input, button, select {
+    input, button {
       width: 100%;
       padding: 12px;
       border: 1px solid #ccc;
       border-radius: 8px;
       font-size: 16px;
+    }
+
+    input:disabled,
+    button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
     }
 
     button {
@@ -89,12 +95,6 @@
       margin-top: 14px;
     }
 
-    .linha {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
     .mensagem {
       padding: 12px;
       border-radius: 8px;
@@ -129,7 +129,7 @@
       margin-bottom: 20px;
     }
 
-    .topo .usuario {
+    .usuario {
       font-size: 14px;
       color: #555;
     }
@@ -171,7 +171,6 @@
     }
 
     @media (max-width: 600px) {
-      .linha,
       .menu {
         grid-template-columns: 1fr;
       }
@@ -201,7 +200,7 @@
         <input type="password" id="senhaFeirante" placeholder="Digite a senha">
       </div>
 
-      <button onclick="fazerLogin()">Entrar</button>
+      <button id="btnLogin" onclick="fazerLogin()">Entrar</button>
     </section>
 
     <section id="telaSistema" class="hidden">
@@ -228,7 +227,7 @@
           <input type="text" id="codigoServidor" placeholder="Escaneie ou digite o código do servidor">
         </div>
 
-        <button onclick="consultarServidor()">Consultar Saldo</button>
+        <button id="btnConsultar" onclick="consultarServidor()">Consultar Saldo</button>
 
         <div id="cardServidor" class="card hidden">
           <div class="resumo"><strong>ID:</strong> <span id="srvId"></span></div>
@@ -238,10 +237,10 @@
 
           <div class="campo" style="margin-top: 16px;">
             <label for="valorCompra">Valor da Compra</label>
-            <input type="number" id="valorCompra" step="0.01" min="0" placeholder="Ex.: 20.00">
+            <input type="text" id="valorCompra" placeholder="Ex.: 20,00">
           </div>
 
-          <button class="btn-verde" onclick="registrarCompra()">Confirmar Compra</button>
+          <button id="btnCompra" class="btn-verde" onclick="registrarCompra()">Confirmar Compra</button>
         </div>
       </section>
 
@@ -258,12 +257,12 @@
 
     let feiranteLogado = null;
     let servidorAtual = null;
+    let compraEmProcessamento = false;
 
     function mostrarMensagem(texto, tipo = 'info') {
       const div = document.getElementById('mensagem');
       div.className = `mensagem ${tipo}`;
       div.textContent = texto;
-      div.classList.remove('hidden');
     }
 
     function limparMensagem() {
@@ -294,6 +293,15 @@
       return d.toLocaleString('pt-BR');
     }
 
+    function normalizarValor(valor) {
+      if (!valor) return '';
+      return String(valor).trim().replace(/\./g, '').replace(',', '.');
+    }
+
+    function gerarRequestId() {
+      return 'REQ-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10).toUpperCase();
+    }
+
     async function chamarAPI(params) {
       const query = new URLSearchParams(params).toString();
       const url = `${API_URL}?${query}`;
@@ -306,6 +314,10 @@
     async function fazerLogin() {
       try {
         limparMensagem();
+
+        const btn = document.getElementById('btnLogin');
+        btn.disabled = true;
+        btn.textContent = 'Entrando...';
 
         const codigoFeirante = document.getElementById('codigoFeirante').value.trim();
         const senha = document.getElementById('senhaFeirante').value.trim();
@@ -338,12 +350,17 @@
         mostrarMensagem('Login realizado com sucesso.', 'sucesso');
       } catch (error) {
         mostrarMensagem('Erro ao conectar com o servidor.', 'erro');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Entrar';
       }
     }
 
     function logout() {
       feiranteLogado = null;
       servidorAtual = null;
+      compraEmProcessamento = false;
+
       localStorage.removeItem('feiranteLogado');
 
       document.getElementById('telaLogin').classList.remove('hidden');
@@ -362,6 +379,10 @@
       try {
         limparMensagem();
 
+        const btn = document.getElementById('btnConsultar');
+        btn.disabled = true;
+        btn.textContent = 'Consultando...';
+
         const codigoServidor = document.getElementById('codigoServidor').value.trim();
 
         if (!codigoServidor) {
@@ -375,6 +396,7 @@
         });
 
         if (!dados.ok) {
+          servidorAtual = null;
           document.getElementById('cardServidor').classList.add('hidden');
           mostrarMensagem(dados.message || 'Servidor não encontrado.', 'erro');
           return;
@@ -386,16 +408,25 @@
         document.getElementById('srvNome').textContent = servidorAtual.nome;
         document.getElementById('srvSecretaria').textContent = servidorAtual.secretaria;
         document.getElementById('srvSaldo').textContent = formatarMoeda(servidorAtual.saldo);
+        document.getElementById('valorCompra').value = '';
 
         document.getElementById('cardServidor').classList.remove('hidden');
 
         mostrarMensagem('Servidor localizado com sucesso.', 'sucesso');
       } catch (error) {
         mostrarMensagem('Erro ao consultar servidor.', 'erro');
+      } finally {
+        const btn = document.getElementById('btnConsultar');
+        btn.disabled = false;
+        btn.textContent = 'Consultar Saldo';
       }
     }
 
     async function registrarCompra() {
+      if (compraEmProcessamento) {
+        return;
+      }
+
       try {
         limparMensagem();
 
@@ -409,30 +440,45 @@
           return;
         }
 
-        const valorCompra = document.getElementById('valorCompra').value.trim();
+        const valorDigitado = document.getElementById('valorCompra').value.trim();
+        const valorNormalizado = normalizarValor(valorDigitado);
+        const valorNumero = Number(valorNormalizado);
 
-        if (!valorCompra || Number(valorCompra) <= 0) {
+        if (!valorDigitado || isNaN(valorNumero) || valorNumero <= 0) {
           mostrarMensagem('Informe um valor de compra válido.', 'erro');
           return;
         }
 
+        const requestId = gerarRequestId();
+
+        compraEmProcessamento = true;
+
+        const btn = document.getElementById('btnCompra');
+        btn.disabled = true;
+        btn.textContent = 'Processando compra...';
+
         const dados = await chamarAPI({
           action: 'registrarCompra',
           codigoServidor: servidorAtual.id,
-          valor: valorCompra,
-          codigoFeirante: feiranteLogado.codigoQR
+          valor: valorDigitado,
+          codigoFeirante: feiranteLogado.codigoQR,
+          requestId: requestId
         });
 
         if (!dados.ok) {
-          mostrarMensagem(dados.message || 'Erro ao registrar compra.', 'erro');
+          if (dados.duplicada) {
+            mostrarMensagem('Compra já processada anteriormente. Nenhuma nova cobrança foi feita.', 'info');
+          } else {
+            mostrarMensagem(dados.message || 'Erro ao registrar compra.', 'erro');
+          }
           return;
         }
 
         const compra = dados.compra;
 
+        servidorAtual.saldo = compra.saldoAtual;
         document.getElementById('srvSaldo').textContent = formatarMoeda(compra.saldoAtual);
         document.getElementById('valorCompra').value = '';
-        servidorAtual.saldo = compra.saldoAtual;
 
         mostrarMensagem(
           `Compra registrada com sucesso. Transação: ${compra.idTransacao}. Saldo atual: R$ ${formatarMoeda(compra.saldoAtual)}.`,
@@ -440,6 +486,11 @@
         );
       } catch (error) {
         mostrarMensagem('Erro ao registrar a compra.', 'erro');
+      } finally {
+        compraEmProcessamento = false;
+        const btn = document.getElementById('btnCompra');
+        btn.disabled = false;
+        btn.textContent = 'Confirmar Compra';
       }
     }
 
