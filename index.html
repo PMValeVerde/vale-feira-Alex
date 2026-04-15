@@ -4,9 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vale-Feira Digital</title>
-
-  <script src="https://unpkg.com/html5-qrcode"></script>
-
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
     * {
       box-sizing: border-box;
@@ -15,279 +13,808 @@
 
     body {
       margin: 0;
+      padding: 0;
       background: #f4f6f8;
+      color: #222;
     }
 
     .container {
       max-width: 700px;
-      margin: 20px auto;
+      margin: 30px auto;
       background: #fff;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-radius: 14px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+      padding: 24px;
     }
 
     h1, h2, h3 {
       margin-top: 0;
     }
 
+    .hidden {
+      display: none;
+    }
+
     .campo {
-      margin-bottom: 12px;
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 6px;
     }
 
     input, button {
       width: 100%;
       padding: 12px;
-      border-radius: 8px;
       border: 1px solid #ccc;
+      border-radius: 8px;
       font-size: 16px;
+    }
+
+    input:disabled,
+    button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
     }
 
     button {
       background: #1f6feb;
       color: white;
       border: none;
-      font-weight: bold;
       cursor: pointer;
+      font-weight: bold;
+      margin-top: 6px;
     }
 
-    .btn-secundario { background: #6c757d; }
-    .btn-verde { background: #198754; }
-    .btn-laranja { background: #fd7e14; }
+    button:hover {
+      background: #1557b0;
+    }
 
-    .hidden { display: none; }
+    .btn-secundario {
+      background: #6c757d;
+    }
+
+    .btn-secundario:hover {
+      background: #545b62;
+    }
+
+    .btn-verde {
+      background: #198754;
+    }
+
+    .btn-verde:hover {
+      background: #146c43;
+    }
+
+    .btn-laranja {
+      background: #fd7e14;
+    }
+
+    .btn-laranja:hover {
+      background: #d96a0f;
+    }
 
     .card {
       background: #f8f9fa;
+      border: 1px solid #e3e6ea;
       border-radius: 10px;
+      padding: 14px;
+      margin-top: 14px;
+    }
+
+    .mensagem {
       padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-weight: bold;
+    }
+
+    .sucesso {
+      background: #d1e7dd;
+      color: #0f5132;
+      border: 1px solid #badbcc;
+    }
+
+    .erro {
+      background: #f8d7da;
+      color: #842029;
+      border: 1px solid #f5c2c7;
+    }
+
+    .info {
+      background: #cff4fc;
+      color: #055160;
+      border: 1px solid #b6effb;
+    }
+
+    .topo {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .usuario {
+      font-size: 14px;
+      color: #555;
+    }
+
+    .tabela {
+      width: 100%;
+      border-collapse: collapse;
       margin-top: 12px;
     }
 
-    #readerLogin, #readerServidor {
-      max-width: 300px;
-      margin: auto;
+    .tabela th,
+    .tabela td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+      font-size: 14px;
     }
 
-    /* TOAST */
-    #toast {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 14px 20px;
-      border-radius: 10px;
-      color: #fff;
+    .tabela th {
+      background: #f1f3f5;
+    }
+
+    .menu {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .resumo {
       font-size: 15px;
-      display: none;
-      z-index: 9999;
-      max-width: 90%;
-      text-align: center;
+      line-height: 1.6;
     }
 
-    .toast-sucesso { background: #198754; }
-    .toast-erro { background: #dc3545; }
-    .toast-info { background: #0d6efd; }
+    .destaque {
+      font-size: 22px;
+      font-weight: bold;
+      color: #198754;
+    }
+
+    #readerLogin,
+    #readerServidor {
+      width: 100%;
+      max-width: 420px;
+      margin: 12px auto 0 auto;
+    }
+
+    .acoes-leitor {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 600px) {
+      .menu,
+      .acoes-leitor {
+        grid-template-columns: 1fr;
+      }
+
+      .container {
+        margin: 10px;
+        padding: 16px;
+      }
+    }
   </style>
 </head>
-
 <body>
+  <div class="container">
+    <div id="mensagem"></div>
 
-<div class="container">
+    <section id="telaLogin">
+      <h1>Vale-Feira Digital</h1>
+      <p>Login do feirante</p>
 
-  <!-- LOGIN -->
-  <section id="telaLogin">
-    <h1>Vale-Feira Digital</h1>
+      <div class="campo">
+        <label for="codigoFeirante">Código do Feirante</label>
+        <input type="text" id="codigoFeirante" placeholder="Ex.: 1">
+      </div>
 
-    <div class="campo">
-      <input type="text" id="codigoFeirante" placeholder="Código do Feirante">
-    </div>
+      <div class="acoes-leitor">
+        <button type="button" class="btn-laranja" onclick="iniciarLeitorQrFeirante()">Ler QR do Feirante</button>
+        <button type="button" class="btn-secundario" onclick="pararLeitorQrFeirante()">Fechar câmera</button>
+      </div>
 
-    <button class="btn-laranja" onclick="iniciarLeitorQrFeirante()">Ler QR</button>
+      <div id="areaLeitorLogin" class="card hidden">
+        <div class="resumo"><strong>Leitor de QR do Feirante</strong></div>
+        <div class="resumo">Aponte a câmera para o QR Code do feirante.</div>
+        <div id="readerLogin"></div>
+      </div>
 
-    <div id="readerLogin" class="hidden"></div>
+      <div class="campo">
+        <label for="senhaFeirante">Senha</label>
+        <input type="password" id="senhaFeirante" placeholder="Digite a senha">
+      </div>
 
-    <div class="campo">
-      <input type="password" id="senhaFeirante" placeholder="Senha">
-    </div>
+      <button id="btnLogin" onclick="fazerLogin()">Entrar</button>
+    </section>
 
-    <button onclick="fazerLogin()">Entrar</button>
-  </section>
+    <section id="telaSistema" class="hidden">
+      <div class="topo">
+        <div>
+          <h2>Painel do Feirante</h2>
+          <div class="usuario" id="usuarioLogado"></div>
+        </div>
+        <div>
+          <button class="btn-secundario" onclick="logout()">Sair</button>
+        </div>
+      </div>
 
-  <!-- SISTEMA -->
-  <section id="telaSistema" class="hidden">
+      <div class="menu">
+        <button onclick="mostrarTela('telaConsulta')">Registrar Compra</button>
+        <button class="btn-secundario" onclick="carregarExtrato()">Ver Extrato</button>
+      </div>
 
-    <h2 id="usuarioLogado"></h2>
+      <section id="telaConsulta">
+        <h3>Consulta e Pagamento</h3>
 
-    <button class="btn-secundario" onclick="logout()">Sair</button>
+        <div class="campo">
+          <label for="codigoServidor">QR Code / ID do Servidor</label>
+          <input type="text" id="codigoServidor" placeholder="Escaneie ou digite o código do servidor">
+        </div>
 
-    <hr>
+        <div class="acoes-leitor">
+          <button type="button" class="btn-laranja" onclick="iniciarLeitorQrServidor()">Ler QR do Servidor</button>
+          <button type="button" class="btn-secundario" onclick="pararLeitorQrServidor()">Fechar câmera</button>
+        </div>
 
-    <h3>Registrar Compra</h3>
+        <div id="areaLeitorServidor" class="card hidden">
+          <div class="resumo"><strong>Leitor de QR do Servidor</strong></div>
+          <div class="resumo">Aponte a câmera para o QR Code do servidor.</div>
+          <div id="readerServidor"></div>
+        </div>
 
-    <input type="text" id="codigoServidor" placeholder="QR ou ID do servidor">
+        <button id="btnConsultar" onclick="consultarServidor()">Consultar Saldo</button>
 
-    <button class="btn-laranja" onclick="iniciarLeitorQrServidor()">Ler QR</button>
+        <div id="cardServidor" class="card hidden">
+          <div class="resumo"><strong>ID:</strong> <span id="srvId"></span></div>
+          <div class="resumo"><strong>Nome:</strong> <span id="srvNome"></span></div>
+          <div class="resumo"><strong>Secretaria:</strong> <span id="srvSecretaria"></span></div>
+          <div class="resumo"><strong>Saldo Atual:</strong> R$ <span id="srvSaldo"></span></div>
 
-    <div id="readerServidor" class="hidden"></div>
+          <div class="campo" style="margin-top: 16px;">
+            <label for="valorCompra">Valor da Compra</label>
+            <input type="text" id="valorCompra" placeholder="Ex.: 9,80">
+          </div>
 
-    <button onclick="consultarServidor()">Consultar</button>
+          <button id="btnCompra" class="btn-verde" onclick="registrarCompra()">Confirmar Compra</button>
+        </div>
+      </section>
 
-    <div id="cardServidor" class="card hidden">
-      <p><b>ID:</b> <span id="srvId"></span></p>
-      <p><b>Nome:</b> <span id="srvNome"></span></p>
-      <p><b>Saldo:</b> R$ <span id="srvSaldo"></span></p>
+      <section id="telaExtrato" class="hidden">
+        <h3>Extrato do Feirante</h3>
+        <div id="resumoExtrato" class="card hidden"></div>
+        <div id="listaExtrato"></div>
+      </section>
+    </section>
+  </div>
 
-      <input type="text" id="valorCompra" placeholder="Valor">
+  <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwEkneM56C6Sz9hG9AUA-K5toUxQjLqN04RN7Di9DGD67zexmuGO9LfdrM4r5kAJ9NfwQ/exec';
 
-      <button class="btn-verde" onclick="registrarCompra()">Confirmar</button>
-    </div>
+    let feiranteLogado = null;
+    let servidorAtual = null;
+    let compraEmProcessamento = false;
 
-  </section>
+    let html5QrCodeLogin = null;
+    let leitorLoginAtivo = false;
 
-</div>
+    let html5QrCodeServidor = null;
+    let leitorServidorAtivo = false;
 
-<!-- TOAST -->
-<div id="toast"></div>
-
-<script>
-const API_URL = "https://script.google.com/macros/s/AKfycbwEkneM56C6Sz9hG9AUA-K5toUxQjLqN04RN7Di9DGD67zexmuGO9LfdrM4r5kAJ9NfwQ/exec";
-
-let feiranteLogado = null;
-let servidorAtual = null;
-
-/* TOAST */
-function mostrarToast(msg, tipo="info"){
-  const t = document.getElementById("toast");
-  t.className = "toast-" + tipo;
-  t.innerText = msg;
-  t.style.display = "block";
-  setTimeout(()=> t.style.display="none", 3000);
-}
-
-/* API */
-async function chamarAPI(params){
-  const url = API_URL + "?" + new URLSearchParams(params);
-  const r = await fetch(url);
-  return await r.json();
-}
-
-/* LOGIN */
-async function fazerLogin(){
-  const codigo = codigoFeirante.value;
-  const senha = senhaFeirante.value;
-
-  const d = await chamarAPI({
-    action:"loginFeirante",
-    codigoFeirante:codigo,
-    senha
-  });
-
-  if(!d.ok){
-    mostrarToast(d.message,"erro");
-    return;
-  }
-
-  feiranteLogado = d.feirante;
-
-  telaLogin.classList.add("hidden");
-  telaSistema.classList.remove("hidden");
-
-  usuarioLogado.innerText = "Feirante: " + feiranteLogado.nome;
-
-  mostrarToast("Login OK","sucesso");
-}
-
-/* LOGOUT */
-function logout(){
-  location.reload();
-}
-
-/* CONSULTAR */
-async function consultarServidor(){
-  const codigo = codigoServidor.value;
-
-  const d = await chamarAPI({
-    action:"consultarServidor",
-    codigoServidor:codigo
-  });
-
-  if(!d.ok){
-    mostrarToast("Servidor não encontrado","erro");
-    return;
-  }
-
-  servidorAtual = d.servidor;
-
-  srvId.innerText = servidorAtual.id;
-  srvNome.innerText = servidorAtual.nome;
-  srvSaldo.innerText = servidorAtual.saldo.toFixed(2);
-
-  cardServidor.classList.remove("hidden");
-
-  mostrarToast("Servidor OK","sucesso");
-}
-
-/* COMPRA */
-async function registrarCompra(){
-  const valor = valorCompra.value;
-
-  const d = await chamarAPI({
-    action:"registrarCompra",
-    codigoServidor:servidorAtual.id,
-    valor,
-    codigoFeirante:feiranteLogado.codigoQR
-  });
-
-  if(!d.ok){
-    mostrarToast(d.message,"erro");
-    return;
-  }
-
-  srvSaldo.innerText = d.compra.saldoAtual.toFixed(2);
-  valorCompra.value = "";
-
-  mostrarToast("Compra registrada","sucesso");
-}
-
-/* QR FEIRANTE */
-let qrLogin;
-
-async function iniciarLeitorQrFeirante(){
-  document.getElementById("readerLogin").classList.remove("hidden");
-
-  qrLogin = new Html5Qrcode("readerLogin");
-
-  await qrLogin.start(
-    { facingMode:"environment" },
-    { fps:10 },
-    (txt)=>{
-      codigoFeirante.value = txt;
-      qrLogin.stop();
-      mostrarToast("QR lido","sucesso");
+    function mostrarMensagem(texto, tipo = 'info') {
+      const div = document.getElementById('mensagem');
+      div.className = `mensagem ${tipo}`;
+      div.textContent = texto;
     }
-  );
-}
 
-/* QR SERVIDOR */
-let qrServidor;
-
-async function iniciarLeitorQrServidor(){
-  document.getElementById("readerServidor").classList.remove("hidden");
-
-  qrServidor = new Html5Qrcode("readerServidor");
-
-  await qrServidor.start(
-    { facingMode:"environment" },
-    { fps:10 },
-    (txt)=>{
-      codigoServidor.value = txt;
-      qrServidor.stop();
-      consultarServidor();
+    function limparMensagem() {
+      const div = document.getElementById('mensagem');
+      div.className = '';
+      div.textContent = '';
     }
-  );
-}
-</script>
 
+    function mostrarTela(nomeTela) {
+      document.getElementById('telaConsulta').classList.add('hidden');
+      document.getElementById('telaExtrato').classList.add('hidden');
+      document.getElementById(nomeTela).classList.remove('hidden');
+      limparMensagem();
+    }
+
+    function formatarMoeda(valor) {
+      return Number(valor || 0).toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function formatarData(data) {
+      const d = new Date(data);
+      if (isNaN(d.getTime())) {
+        return data;
+      }
+      return d.toLocaleString('pt-BR');
+    }
+
+    function normalizarValor(valor) {
+      if (!valor) return '';
+      return String(valor).trim().replace(/\./g, '').replace(',', '.');
+    }
+
+    function gerarRequestId() {
+      return 'REQ-' + Date.now() + '-' + Math.random().toString(36).slice(2, 10).toUpperCase();
+    }
+
+    function confirmarLeituraQr() {
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+
+        gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.18);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.18);
+      } catch (error) {
+      }
+
+      try {
+        if (navigator.vibrate) {
+          navigator.vibrate(150);
+        }
+      } catch (error) {
+      }
+    }
+
+    async function chamarAPI(params) {
+      const query = new URLSearchParams(params).toString();
+      const url = `${API_URL}?${query}`;
+      const resposta = await fetch(url);
+      const dados = await resposta.json();
+      return dados;
+    }
+
+    async function fazerLogin() {
+      const btn = document.getElementById('btnLogin');
+
+      try {
+        limparMensagem();
+
+        btn.disabled = true;
+        btn.textContent = 'Entrando...';
+
+        const codigoFeirante = document.getElementById('codigoFeirante').value.trim();
+        const senha = document.getElementById('senhaFeirante').value.trim();
+
+        if (!codigoFeirante || !senha) {
+          mostrarMensagem('Informe o código do feirante e a senha.', 'erro');
+          return;
+        }
+
+        const dados = await chamarAPI({
+          action: 'loginFeirante',
+          codigoFeirante,
+          senha
+        });
+
+        if (!dados.ok) {
+          mostrarMensagem(dados.message || 'Erro no login.', 'erro');
+          return;
+        }
+
+        feiranteLogado = dados.feirante;
+        localStorage.setItem('feiranteLogado', JSON.stringify(feiranteLogado));
+
+        document.getElementById('telaLogin').classList.add('hidden');
+        document.getElementById('telaSistema').classList.remove('hidden');
+        document.getElementById('usuarioLogado').textContent =
+          `Feirante: ${feiranteLogado.nome} (${feiranteLogado.codigoQR})`;
+
+        mostrarTela('telaConsulta');
+        mostrarMensagem('Login realizado com sucesso.', 'sucesso');
+      } catch (error) {
+        mostrarMensagem('Erro ao conectar com o servidor.', 'erro');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Entrar';
+      }
+    }
+
+    async function logout() {
+      await pararLeitorQrFeirante();
+      await pararLeitorQrServidor();
+
+      feiranteLogado = null;
+      servidorAtual = null;
+      compraEmProcessamento = false;
+
+      localStorage.removeItem('feiranteLogado');
+
+      document.getElementById('telaLogin').classList.remove('hidden');
+      document.getElementById('telaSistema').classList.add('hidden');
+      document.getElementById('cardServidor').classList.add('hidden');
+
+      document.getElementById('codigoFeirante').value = '';
+      document.getElementById('senhaFeirante').value = '';
+      document.getElementById('codigoServidor').value = '';
+      document.getElementById('valorCompra').value = '';
+
+      limparMensagem();
+    }
+
+    async function consultarServidor() {
+      const btn = document.getElementById('btnConsultar');
+
+      try {
+        limparMensagem();
+
+        btn.disabled = true;
+        btn.textContent = 'Consultando...';
+
+        const codigoServidor = document.getElementById('codigoServidor').value.trim();
+
+        if (!codigoServidor) {
+          mostrarMensagem('Informe ou escaneie o código do servidor.', 'erro');
+          return;
+        }
+
+        const dados = await chamarAPI({
+          action: 'consultarServidor',
+          codigoServidor
+        });
+
+        if (!dados.ok) {
+          servidorAtual = null;
+          document.getElementById('cardServidor').classList.add('hidden');
+          mostrarMensagem(dados.message || 'Servidor não encontrado.', 'erro');
+          return;
+        }
+
+        servidorAtual = dados.servidor;
+
+        document.getElementById('srvId').textContent = servidorAtual.id;
+        document.getElementById('srvNome').textContent = servidorAtual.nome;
+        document.getElementById('srvSecretaria').textContent = servidorAtual.secretaria;
+        document.getElementById('srvSaldo').textContent = formatarMoeda(servidorAtual.saldo);
+        document.getElementById('valorCompra').value = '';
+
+        document.getElementById('cardServidor').classList.remove('hidden');
+
+        mostrarMensagem('Servidor localizado com sucesso.', 'sucesso');
+      } catch (error) {
+        mostrarMensagem('Erro ao consultar servidor.', 'erro');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Consultar Saldo';
+      }
+    }
+
+    async function registrarCompra() {
+      if (compraEmProcessamento) {
+        return;
+      }
+
+      const btn = document.getElementById('btnCompra');
+
+      try {
+        limparMensagem();
+
+        if (!feiranteLogado) {
+          mostrarMensagem('Feirante não autenticado.', 'erro');
+          return;
+        }
+
+        if (!servidorAtual) {
+          mostrarMensagem('Consulte primeiro um servidor.', 'erro');
+          return;
+        }
+
+        const valorDigitado = document.getElementById('valorCompra').value.trim();
+        const valorNormalizado = normalizarValor(valorDigitado);
+        const valorNumero = Number(valorNormalizado);
+
+        if (!valorDigitado || isNaN(valorNumero) || valorNumero <= 0) {
+          mostrarMensagem('Informe um valor de compra válido.', 'erro');
+          return;
+        }
+
+        const requestId = gerarRequestId();
+
+        compraEmProcessamento = true;
+        btn.disabled = true;
+        btn.textContent = 'Processando compra...';
+
+        const dados = await chamarAPI({
+          action: 'registrarCompra',
+          codigoServidor: servidorAtual.id,
+          valor: valorDigitado,
+          codigoFeirante: feiranteLogado.codigoQR,
+          requestId: requestId
+        });
+
+        if (!dados.ok) {
+          if (dados.duplicada) {
+            mostrarMensagem('Compra já processada anteriormente. Nenhuma nova cobrança foi feita.', 'info');
+          } else {
+            mostrarMensagem(dados.message || 'Erro ao registrar compra.', 'erro');
+          }
+          return;
+        }
+
+        const compra = dados.compra;
+
+        servidorAtual.saldo = compra.saldoAtual;
+        document.getElementById('srvSaldo').textContent = formatarMoeda(compra.saldoAtual);
+        document.getElementById('valorCompra').value = '';
+
+        mostrarMensagem(
+          `Compra registrada com sucesso. Transação: ${compra.idTransacao}. Saldo atual: R$ ${formatarMoeda(compra.saldoAtual)}.`,
+          'sucesso'
+        );
+      } catch (error) {
+        mostrarMensagem('Erro ao registrar a compra.', 'erro');
+      } finally {
+        compraEmProcessamento = false;
+        btn.disabled = false;
+        btn.textContent = 'Confirmar Compra';
+      }
+    }
+
+    async function carregarExtrato() {
+      try {
+        limparMensagem();
+
+        if (!feiranteLogado) {
+          mostrarMensagem('Feirante não autenticado.', 'erro');
+          return;
+        }
+
+        mostrarTela('telaExtrato');
+
+        const dados = await chamarAPI({
+          action: 'extratoFeirante',
+          codigoFeirante: feiranteLogado.codigoQR
+        });
+
+        if (!dados.ok) {
+          mostrarMensagem(dados.message || 'Erro ao carregar extrato.', 'erro');
+          return;
+        }
+
+        const resumo = document.getElementById('resumoExtrato');
+        const lista = document.getElementById('listaExtrato');
+
+        resumo.classList.remove('hidden');
+        resumo.innerHTML = `
+          <div class="resumo"><strong>Feirante:</strong> ${dados.feirante.nome}</div>
+          <div class="resumo"><strong>Código:</strong> ${dados.feirante.codigoQR}</div>
+          <div class="resumo"><strong>Quantidade de vendas:</strong> ${dados.quantidadeMovimentos}</div>
+          <div class="resumo"><strong>Total vendido:</strong></div>
+          <div class="destaque">R$ ${formatarMoeda(dados.totalVendido)}</div>
+        `;
+
+        if (!dados.movimentos || dados.movimentos.length === 0) {
+          lista.innerHTML = `<div class="card">Nenhuma movimentação encontrada.</div>`;
+          return;
+        }
+
+        let html = `
+          <table class="tabela">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Servidor</th>
+                <th>Secretaria</th>
+                <th>Valor</th>
+                <th>Saldo após compra</th>
+                <th>Transação</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        dados.movimentos.forEach(item => {
+          html += `
+            <tr>
+              <td>${formatarData(item.data)}</td>
+              <td>${item.nomeServidor} (${item.idServidor})</td>
+              <td>${item.secretaria}</td>
+              <td>R$ ${formatarMoeda(item.valor)}</td>
+              <td>R$ ${formatarMoeda(item.saldoAposCompra)}</td>
+              <td>${item.idTransacao}</td>
+            </tr>
+          `;
+        });
+
+        html += `
+            </tbody>
+          </table>
+        `;
+
+        lista.innerHTML = html;
+        mostrarMensagem('Extrato carregado com sucesso.', 'sucesso');
+      } catch (error) {
+        mostrarMensagem('Erro ao carregar extrato.', 'erro');
+      }
+    }
+
+    async function iniciarLeitorQrFeirante() {
+      try {
+        limparMensagem();
+
+        if (leitorLoginAtivo) {
+          mostrarMensagem('A câmera do login já está ativa.', 'info');
+          return;
+        }
+
+        const area = document.getElementById('areaLeitorLogin');
+        area.classList.remove('hidden');
+
+        if (!html5QrCodeLogin) {
+          html5QrCodeLogin = new Html5Qrcode("readerLogin");
+        }
+
+        const config = {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0
+        };
+
+        await html5QrCodeLogin.start(
+          { facingMode: "environment" },
+          config,
+          async (decodedText) => {
+            confirmarLeituraQr();
+            document.getElementById('codigoFeirante').value = decodedText.trim();
+            await pararLeitorQrFeirante();
+            mostrarMensagem('QR do feirante lido com sucesso.', 'sucesso');
+            document.getElementById('senhaFeirante').focus();
+          },
+          () => {}
+        );
+
+        leitorLoginAtivo = true;
+        mostrarMensagem('Câmera iniciada. Aponte para o QR do feirante.', 'info');
+      } catch (error) {
+        document.getElementById('areaLeitorLogin').classList.add('hidden');
+        mostrarMensagem('Não foi possível acessar a câmera do login. Verifique a permissão do navegador.', 'erro');
+      }
+    }
+
+    async function pararLeitorQrFeirante() {
+      try {
+        if (html5QrCodeLogin && leitorLoginAtivo) {
+          await html5QrCodeLogin.stop();
+          await html5QrCodeLogin.clear();
+        }
+      } catch (error) {
+      } finally {
+        leitorLoginAtivo = false;
+        document.getElementById('areaLeitorLogin').classList.add('hidden');
+        document.getElementById('readerLogin').innerHTML = '';
+      }
+    }
+
+    async function iniciarLeitorQrServidor() {
+      try {
+        limparMensagem();
+
+        if (leitorServidorAtivo) {
+          mostrarMensagem('A câmera do servidor já está ativa.', 'info');
+          return;
+        }
+
+        const area = document.getElementById('areaLeitorServidor');
+        area.classList.remove('hidden');
+
+        if (!html5QrCodeServidor) {
+          html5QrCodeServidor = new Html5Qrcode("readerServidor");
+        }
+
+        const config = {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0
+        };
+
+        await html5QrCodeServidor.start(
+          { facingMode: "environment" },
+          config,
+          async (decodedText) => {
+            confirmarLeituraQr();
+            document.getElementById('codigoServidor').value = decodedText.trim();
+            await pararLeitorQrServidor();
+            mostrarMensagem('QR do servidor lido com sucesso.', 'sucesso');
+            await consultarServidor();
+          },
+          () => {}
+        );
+
+        leitorServidorAtivo = true;
+        mostrarMensagem('Câmera iniciada. Aponte para o QR do servidor.', 'info');
+      } catch (error) {
+        document.getElementById('areaLeitorServidor').classList.add('hidden');
+        mostrarMensagem('Não foi possível acessar a câmera do servidor. Verifique a permissão do navegador.', 'erro');
+      }
+    }
+
+    async function pararLeitorQrServidor() {
+      try {
+        if (html5QrCodeServidor && leitorServidorAtivo) {
+          await html5QrCodeServidor.stop();
+          await html5QrCodeServidor.clear();
+        }
+      } catch (error) {
+      } finally {
+        leitorServidorAtivo = false;
+        document.getElementById('areaLeitorServidor').classList.add('hidden');
+        document.getElementById('readerServidor').innerHTML = '';
+      }
+    }
+
+    function restaurarLogin() {
+      const salvo = localStorage.getItem('feiranteLogado');
+      if (!salvo) {
+        return;
+      }
+
+      try {
+        feiranteLogado = JSON.parse(salvo);
+
+        document.getElementById('telaLogin').classList.add('hidden');
+        document.getElementById('telaSistema').classList.remove('hidden');
+        document.getElementById('usuarioLogado').textContent =
+          `Feirante: ${feiranteLogado.nome} (${feiranteLogado.codigoQR})`;
+
+        mostrarTela('telaConsulta');
+      } catch (error) {
+        localStorage.removeItem('feiranteLogado');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      restaurarLogin();
+
+      document.getElementById('codigoServidor').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          consultarServidor();
+        }
+      });
+
+      document.getElementById('codigoFeirante').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          document.getElementById('senhaFeirante').focus();
+        }
+      });
+
+      document.getElementById('senhaFeirante').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          fazerLogin();
+        }
+      });
+
+      document.getElementById('valorCompra').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          registrarCompra();
+        }
+      });
+    });
+  </script>
 </body>
 </html>
